@@ -1,0 +1,80 @@
+version: '3'
+
+services:
+  redis:
+    image: redis:4.0.9-alpine
+    networks:
+      - internal-network
+    ports:
+      - "6379:6379"
+
+  nsqlookupd:
+    image: nsqio/nsq:v0.3.8
+    command: /nsqlookupd
+    networks:
+      - internal-network
+    ports:
+      - "4160:4160"
+      - "4161:4161"
+
+  nsqd:
+    image: nsqio/nsq:v0.3.8
+    command: /nsqd --lookupd-tcp-address=nsqlookupd:4160 --broadcast-address=127.0.0.1
+    networks:
+      - internal-network
+    links:
+      - nsqlookupd:nsqlookupd
+    ports:
+      - "4150:4150"
+      - "4151:4151"
+
+  nsqadmin:
+    image: nsqio/nsq:v0.3.8
+    networks:
+      - internal-network
+    ports:
+      - "4171:4171"
+    links:
+      - nsqlookupd:nsqlookupd
+    command: /nsqadmin --lookupd-http-address=nsqlookupd:4161
+
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    depends_on:
+      - nsqd
+    networks:
+      - internal-network
+      - outside-world
+    ports:
+      - "9000:80"
+
+  driver-location:
+    build:
+      context: .
+      dockerfile: driver-location/Dockerfile
+    networks:
+      - internal-network
+    depends_on:
+      - nsqd
+      - redis
+    ports:
+      - "7000:80"
+
+  zombie-driver:
+    build:
+      context: .
+      dockerfile: zombie-driver/Dockerfile
+    networks:
+      - internal-network
+    ports:
+      - "8000:80"
+
+networks:
+  # everything that is *only* on "internal network" cannot talk to WAN
+  internal-network:
+    driver: "bridge"
+    internal: true
+  # add this network to a container to make it talk to the rest of the world
+  outside-world:

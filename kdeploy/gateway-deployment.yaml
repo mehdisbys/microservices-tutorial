@@ -1,0 +1,24 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: gateway
+    version: "5"
+  name: gateway
+spec:
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        io.kompose.network/internal-network: "true"
+        io.kompose.network/outside-world: "true"
+        app: gateway
+    spec:
+      containers:
+      - image: msouihed/dev:gateway
+        name: gateway
+        ports:
+        - containerPort: 80
+        resources: {}
+      restartPolicy: Always

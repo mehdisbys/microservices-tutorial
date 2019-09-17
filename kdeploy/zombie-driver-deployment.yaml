@@ -1,0 +1,27 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: zombie-driver
+  labels:
+    io.kompose.service: zombie-driver
+spec:
+  selector:
+    matchLabels:
+      app: zombie-driver
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        io.kompose.network/internal-network: "true"
+        io.kompose.service: zombie-driver
+        app: zombie-driver
+    spec:
+      containers:
+        - image: msouihed/dev:zombie-driver
+          name: zombie-driver
+          ports:
+            - containerPort: 80
+          resources: {}
+      restartPolicy: Always
+status: {}

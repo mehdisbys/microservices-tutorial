@@ -1,0 +1,13 @@
+apiVersion: extensions/v1beta1
+kind: NetworkPolicy
+metadata:
+  name: internal-network
+spec:
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          io.kompose.network/internal-network: "true"
+  podSelector:
+    matchLabels:
+      io.kompose.network/internal-network: "true"

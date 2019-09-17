@@ -1,0 +1,4 @@
+driver-service-host: driver-location
+driver-locations-endpoint: drivers/%d/locations
+timeout: 10
+minimum-distance: 500

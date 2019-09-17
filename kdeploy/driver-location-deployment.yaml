@@ -1,0 +1,25 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: driver-location
+  labels:
+    io.kompose.service: driver-location
+    app: driver-location
+spec:
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        io.kompose.network/internal-network: "true"
+        io.kompose.service: driver-location
+        app: driver-location
+    spec:
+      containers:
+      - image: msouihed/dev:driver-location
+        name: driver-location
+        ports:
+        - containerPort: 80
+        resources: {}
+      restartPolicy: Always
+status: {}

@@ -1,0 +1,6 @@
+queue-host: nsqd
+queue-port: 4150
+queue-topic: locations
+
+database-port: 6379
+database-host: redis

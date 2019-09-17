@@ -1,0 +1,34 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.20.0 ()
+  creationTimestamp: null
+  labels:
+    io.kompose.service: nsqlookupd
+  name: nsqlookupd
+spec:
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.20.0 ()
+      creationTimestamp: null
+      labels:
+        io.kompose.network/internal-network: "true"
+        io.kompose.service: nsqlookupd
+    spec:
+      containers:
+      - args:
+        - /nsqlookupd
+        image: nsqio/nsq:v0.3.8
+        name: nsqlookupd
+        ports:
+        - containerPort: 4160
+        - containerPort: 4161
+        resources: {}
+      restartPolicy: Always
+status: {}
