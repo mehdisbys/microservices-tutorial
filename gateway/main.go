@@ -1,28 +1,37 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/Shopify/sarama"
 	"github.com/gorilla/mux"
-
-	"github.com/nsqio/go-nsq"
-
+	"github.com/heetch/MehdiSouilhed-technical-test/common"
 	"github.com/heetch/MehdiSouilhed-technical-test/gateway/app/domain"
 )
 
 func main() {
-	addr := fmt.Sprintf("nsqd:%d", 4150)
-	config := nsq.NewConfig()
+	config := sarama.NewConfig()
+	config.Producer.RequiredAcks = sarama.WaitForAll
+	config.Producer.Retry.Max = 5
+	config.Producer.Retry.Backoff = 5 * time.Second
+	config.Producer.Return.Successes = true
+	config.Admin.Timeout = time.Second * 30
+	config.Admin.Retry.Max = 5
+	config.Admin.Retry.Backoff = 5 * time.Second
 
-	p, err := nsq.NewProducer(addr, config)
+	sarama.Logger = log.New(os.Stdout, "[sarama] ", log.LstdFlags)
+
+	time.Sleep(time.Second * 10)
+
+	producer, err := sarama.NewSyncProducer([]string{"kafka1:9092"}, config)
 	if err != nil {
-		log.Print(err)
-		os.Exit(1)
+		panic(err)
 	}
+
+	p := common.NewKafkaSender(producer)
 
 	handler, err := domain.NewRequestHandler(p, &http.Client{Timeout: 5 * time.Second}, mux.NewRouter())
 	if err != nil {

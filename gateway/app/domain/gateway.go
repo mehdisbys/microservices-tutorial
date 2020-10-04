@@ -16,7 +16,7 @@ type QueueProducer interface {
 
 type RequestHandler struct {
 	client   *http.Client
-	producer QueueProducer
+	producer common.Sender
 	router   *mux.Router
 }
 
@@ -29,7 +29,7 @@ const (
 	logTraceID = "traceID"
 )
 
-func NewRequestHandler(p QueueProducer, client *http.Client, r *mux.Router) (*RequestHandler, error) {
+func NewRequestHandler(p common.Sender, client *http.Client, r *mux.Router) (*RequestHandler, error) {
 
 	return &RequestHandler{
 		producer: p,
@@ -86,7 +86,7 @@ func (s *RequestHandler) makeAsyncHandler(method, path, topic string) {
 		}
 
 		log.Info().Interface("params", urlVars).Str("topic", topic).Msg("transforming request to async event")
-		err = s.producer.Publish(topic, mbytes)
+		err = s.producer.Send(topic, string(mbytes))
 		if err != nil {
 			log.Error().Err(err).Str(logTraceID, traceID).
 				Msg("could not publish message")

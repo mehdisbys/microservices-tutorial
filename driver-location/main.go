@@ -2,18 +2,21 @@ package main
 
 import (
 	"fmt"
+	"github.com/Shopify/sarama"
+	"github.com/go-redis/redis"
+	"github.com/gorilla/mux"
+	"github.com/heetch/MehdiSouilhed-technical-test/common"
+	"github.com/heetch/MehdiSouilhed-technical-test/driver-location/app/domain"
+	"github.com/heetch/MehdiSouilhed-technical-test/driver-location/app/handlers"
 	"log"
 	"net/http"
 	"os"
 	"sync"
-
-	"github.com/go-redis/redis"
-	"github.com/gorilla/mux"
-	"github.com/heetch/MehdiSouilhed-technical-test/driver-location/app/domain"
-	"github.com/heetch/MehdiSouilhed-technical-test/driver-location/app/handlers"
+	"time"
 )
 
 func main() {
+	time.Sleep(10 * time.Second)
 
 	// Loading and validating configuration, if we dont have required config we will exit rather
 	// than fail while the service is running
@@ -59,17 +62,21 @@ func main() {
 	}()
 
 	// Starting queue listener
-	log.Printf("Queue listening on topic %s", c.QueueTopic)
-	q, err := domain.NewNSQQueue(c.QueueTopic, "1", s)
+	topic := "locations"
+	//	partition := 0
+	//	offsetType := kingpin.Flag("offsetType", "Offset Type (OffsetNewest | OffsetOldest)").Default("-1").Int()
+
+	config := sarama.NewConfig()
+	config.Consumer.Return.Errors = true
+
+	consumer, err := sarama.NewConsumer([]string{"kafka1:9092"}, config)
 	if err != nil {
-		log.Printf("Could not create NSQ queue struct %s", err.Error())
-		os.Exit(3)
+		log.Panic(err)
 	}
 
-	err = q.Process(fmt.Sprintf("%s:%d", c.QueueHost, c.QueuePort))
-	if err != nil {
-		log.Printf("a queue error occurred : %s", err.Error())
-		os.Exit(4)
-	}
+	stream := common.NewKafkaConsumer(consumer, s)
+
+	stream.Receive(topic)
+
 	wg.Wait()
 }

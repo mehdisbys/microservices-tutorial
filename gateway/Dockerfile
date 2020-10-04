@@ -1,7 +1,7 @@
-FROM golang:1.12.0-alpine3.9
+FROM golang:1.15.2-alpine3.12
 
-ADD ./config.yaml config.yaml
-ADD ./main .
+ADD  gateway/config.yaml config.yaml
+ADD  gateway/main .
 
 EXPOSE 80
 

@@ -2,12 +2,10 @@ package handlers
 
 import (
 	"encoding/json"
-	"time"
-
 	"github.com/heetch/MehdiSouilhed-technical-test/common"
 	"github.com/heetch/MehdiSouilhed-technical-test/driver-location/app/domain"
-	"github.com/nsqio/go-nsq"
 	"github.com/rs/zerolog/log"
+	"time"
 )
 
 // SaveToDB holds the dependencies for the queue handler
@@ -33,40 +31,30 @@ func (m MissingDriverID) Error() string {
 }
 
 // HandleMessage will unmarshal a message from the queue and save it to the database
-func (s SaveToDB) HandleMessage(message *nsq.Message) error {
-	if message != nil {
-		m := domain.Message{}
+func (s SaveToDB) HandleMessage(message []byte) error {
+	m := domain.Message{}
 
-		// First unmarshal the envelope
-		err := json.Unmarshal(message.Body, &m)
-		if err != nil {
-			log.Error().Err(err)
-			return err
-		}
-
-		traceID := m.Parameters[common.TraceIDHeader]
-		location := domain.Coordinates{}
-
-		// Second unmarshal the content of the message
-		err = json.Unmarshal(m.Body, &location)
-		if err != nil {
-			log.Error().Err(err).Str(logTraceID, traceID)
-			return err
-		}
-
-		if id, ok := m.Parameters["id"]; ok {
-			location.DriverID = id
-		} else {
-			return MissingDriverID{"no driver id found in message"}
-		}
-
-		log.Info().
-			Interface("message", location).
-			Str("driverID", location.DriverID).
-			Str(logTraceID, traceID).
-			Msg("saving location to db")
-
-		return s.database.Save(location.DriverID, location, time.Now())
+	// First unmarshal the envelope
+	err := json.Unmarshal(message, &m)
+	if err != nil {
+		log.Error().Err(err)
+		return err
 	}
-	return nil
+
+	traceID := m.Parameters[common.TraceIDHeader]
+	location := domain.Coordinates{}
+
+	// Second unmarshal the content of the message
+	err = json.Unmarshal(m.Body, &location)
+	if err != nil {
+		log.Error().Err(err).Str(logTraceID, traceID)
+		return err
+	}
+
+	if id, ok := m.Parameters["id"]; ok {
+		location.DriverID = id
+	} else {
+		return MissingDriverID{"no driver id found in message"}
+	}
+	return s.database.Save(location.DriverID, location, time.Now())
 }
